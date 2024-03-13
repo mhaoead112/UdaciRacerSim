@@ -78,24 +78,27 @@ async function handleCreateRace() {
 	renderAt('#race', renderRaceStartView())
 
 	// TODO - Get player_id and track_id from the store
-	
+	const playerId = store.player_id;
+	const trackId = store.track_id;
 	// const race = TODO - invoke the API call to create the race, then save the result
-
+    const race = createRace(playerId , trackId);
 	// TODO - update the store with the race id
+	store.player_id = playerId;
+	store.track_id = trackId;
 	// For the API to work properly, the race id should be race id - 1
-	
+
 	// The race has been created, now start the countdown
 	// TODO - call the async function runCountdown
-
+    runCountdown();
 	// TODO - call the async function startRace
-
+    startRace();
 	// TODO - call the async function runRace
+	runRace();
 }
 
 function runRace(raceID) {
 	return new Promise(resolve => {
 	// TODO - use Javascript's built in setInterval method to get race info every 500ms
-
 	/* 
 		TODO - if the race info status property is "in-progress", update the leaderboard by calling:
 
