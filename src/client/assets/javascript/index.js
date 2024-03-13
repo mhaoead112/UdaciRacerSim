@@ -320,12 +320,26 @@ function defaultFetchOpts() {
 
 // TODO - Make a fetch call (with error handling!) to each of the following API endpoints 
 
-function getTracks() {
+async function getTracks() {
 	// GET request to `${SERVER}/api/tracks`
+	try {
+		const trackResponse = await fetch(`${SERVER}/api/tracks`);
+		const trackData = await trackResponse.json();
+		return trackData;
+	}catch(error) {
+		console.log('Couldnt get tracks' , error);
+	}
 }
 
-function getRacers() {
+async function getRacers() {
 	// GET request to `${SERVER}/api/cars`
+	try {
+		const carResponse = await fetch(`${SERVER}/api/cars`)
+		const carData = await carResponse.json();
+		return carData;
+	} catch(error) {
+		console.log('Couldnt get cars' , error);
+	}
 }
 
 function createRace(player_id, track_id) {
@@ -343,8 +357,11 @@ function createRace(player_id, track_id) {
 	.catch(err => console.log("Problem with createRace request::", err))
 }
 
-function getRace(id) {
+async function getRace(id) {
 	// GET request to `${SERVER}/api/races/${id}`
+	const raceResponse = await fetch(`${SERVER}/api/races/${id}`);
+	const raceData = await raceResponse.json();
+	return raceData
 }
 
 function startRace(id) {
@@ -360,4 +377,10 @@ function accelerate(id) {
 	// POST request to `${SERVER}/api/races/${id}/accelerate`
 	// options parameter provided as defaultFetchOpts
 	// no body or datatype needed for this request
+	return fetch(`${SERVER}/api/races/${id}/accelerate` , {
+		method: 'POST' ,
+		...defaultFetchOpts(),
+	})
+	.then(res => res.json())
+	.catch(err => console.log('Problem with accelerate reuest::' , err))
 }
