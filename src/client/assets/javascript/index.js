@@ -75,30 +75,49 @@ async function delay(ms) {
 // This async function controls the flow of the race, add the logic and error handling
 async function handleCreateRace() {
 	// render starting UI
-	renderAt('#race', renderRaceStartView())
+	
 
 	// TODO - Get player_id and track_id from the store
 	const playerId = store.player_id;
 	const trackId = store.track_id;
 	// const race = TODO - invoke the API call to create the race, then save the result
-    const race = createRace(playerId , trackId);
+    const race = await createRace(store.player_id , store.track_id);
+	console.log(race)
+	renderAt('#race', renderRaceStartView(await race.Track));
+	
 	// TODO - update the store with the race id
-	store.player_id = playerId;
-	store.track_id = trackId;
+	store.race_id = race.id-1;
 	// For the API to work properly, the race id should be race id - 1
 
 	// The race has been created, now start the countdown
 	// TODO - call the async function runCountdown
-    runCountdown();
+    await runCountdown();
 	// TODO - call the async function startRace
-    startRace();
+    await startRace(store.race_id);
 	// TODO - call the async function runRace
-	runRace();
+	await runRace(store.race_id);
 }
 
-function runRace(raceID) {
-	return new Promise(resolve => {
+async function runRace(raceID) {
+	try {
+	return await new Promise(resolve => {
 	// TODO - use Javascript's built in setInterval method to get race info every 500ms
+     const raceInterval = setInterval( async () => {
+		console.log(raceInterval)
+		if(raceID !== null) {
+		   const race = await getRace(raceID)
+		   if(race.status == 'in-progress') {
+			   renderAt('#leaderBoard', raceProgress(race.positions));
+		    }
+		   if(race.status == 'finished') {
+				clearInterval(raceInterval) // to stop the interval from repeating
+			    renderAt('#race', resultsView(race.positions)) // to render the results view
+			    resolve(race) // resolve the promise
+			}
+		}else {
+			throw new Error('Problem with race id')
+		}
+	 } , 500)
 	/* 
 		TODO - if the race info status property is "in-progress", update the leaderboard by calling:
 
@@ -112,27 +131,43 @@ function runRace(raceID) {
 		renderAt('#race', resultsView(res.positions)) // to render the results view
 		reslove(res) // resolve the promise
 	*/
-	})
+	}).catch(clearInterval(4))
+    } catch(err) {
+		console.error(err);
+	};
 	// remember to add error handling for the Promise
 }
 
 async function runCountdown() {
+	let countDownInterval;
 	try {
 		// wait for the DOM to load
 		await delay(1000)
 		let timer = 3
-
+        
 		return new Promise(resolve => {
 			// TODO - use Javascript's built in setInterval method to count down once per second
-
+             countDownInterval = setInterval(() => {
+				timer--
+				console.log(document.getElementById('big-numbers'));
+				if(timer == 0) {
+					clearInterval(countDownInterval);
+					resolve(timer);
+				}
+			} , 1000)
+			setTimeout(()=> {
+				throw new Error('Problem with interval will be closed after 4 secs')
+				clearInterval(2)
+			} , 4000)
 			// run this DOM manipulation to decrement the countdown for the user
-			document.getElementById('big-numbers').innerHTML = --timer
+			
 
 			// TODO - if the countdown is done, clear the interval, resolve the promise, and return
 
-		})
+		}).catch(clearInterval(2));
 	} catch(error) {
 		console.log(error);
+		clearInterval(2);
 	}
 }
 
@@ -149,6 +184,8 @@ function handleSelectPodRacer(target) {
 	target.classList.add('selected')
 
 	// TODO - save the selected racer to the store
+	store.player_id = target.id;
+	console.log(store);
 }
 
 function handleSelectTrack(target) {
@@ -164,12 +201,14 @@ function handleSelectTrack(target) {
 	target.classList.add('selected')
 
 	// TODO - save the selected track id to the store
+	store.track_id = target.id;
 	
 }
 
-function handleAccelerate() {
+async function handleAccelerate() {
 	console.log("accelerate button clicked")
 	// TODO - Invoke the API call to accelerate
+	await accelerate(store.race_id);
 }
 
 // HTML VIEWS ------------------------------------------------
