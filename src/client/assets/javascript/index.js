@@ -110,7 +110,7 @@ async function runRace(raceID) {
 		//TODO - if the race info status property is "in-progress", update the leaderboard by calling:
 		//renderAt('#leaderBoard', raceProgress(res.positions))
 			if (race.status === "in-progress") {
-              renderAt("#leaderBoard", raceProgress(race.positions));
+              renderAt("#leaderBoard", await raceProgress(race.positions));
             } else if (race.status === "finished") {
               clearInterval(raceInterval);
               renderAt("#race", resultsView(race.positions));
@@ -298,7 +298,8 @@ function resultsView(positions) {
 }
 
 function raceProgress(positions) {
-	let userPlayer = positions.find(async e => e.id === store.player_id)
+	console.log(store.player_id)
+	let userPlayer = positions.find(e => e.id == store.player_id)
 	userPlayer.driver_name += " (you)"
 
   positions = positions.sort((a, b) => (a.segment > b.segment ? -1 : 1));
@@ -413,6 +414,6 @@ function accelerate(id) {
     method: "POST",
     ...defaultFetchOpts(),
   })
-    .then((res) => res.json())
+    .then(res => console.log(res))
     .catch((err) => console.log("Problem with accelerate reuest::", err));
 }
