@@ -81,25 +81,25 @@ async function handleCreateRace() {
   const playerId = store.player_id;
   const trackId = store.track_id;
   // const race = TODO - invoke the API call to create the race, then save the result
-  if(store.player_id !== undefined &&store.track_id !==undefined) {
-  const race = await createRace(store.player_id, store.track_id);
-  console.log(race);
-  renderAt("#race", renderRaceStartView(await race.Track));
+  if (store.player_id !== undefined && store.track_id !== undefined) {
+    const race = await createRace(store.player_id, store.track_id);
+    console.log(race);
+    renderAt("#race", renderRaceStartView(await race.Track));
 
-  // TODO - update the store with the race id
-  store.race_id = race.ID - 1;
-  console.log(store.race_id);
-  // For the API to work properly, the race id should be race id - 1
+    // TODO - update the store with the race id
+    store.race_id = race.ID - 1;
+    console.log(store.race_id);
+    // For the API to work properly, the race id should be race id - 1
 
-  // The race has been created, now start the countdown
-  // TODO - call the async function runCountdown
-  await runCountdown();
-  // TODO - call the async function startRace
-  await startRace(store.race_id);
-  // TODO - call the async function runRace
-  await runRace(store.race_id);
-  }else {
-    alert('Please Select Track And Racer');
+    // The race has been created, now start the countdown
+    // TODO - call the async function runCountdown
+    await runCountdown();
+    // TODO - call the async function startRace
+    await startRace(store.race_id);
+    // TODO - call the async function runRace
+    await runRace(store.race_id);
+  } else {
+    alert("Please Select Track And Racer");
   }
 }
 
@@ -110,10 +110,11 @@ async function runRace(raceID) {
         if (raceID !== null) {
           try {
             const race = await getRace(raceID);
-             console.log(race)
-		//TODO - if the race info status property is "in-progress", update the leaderboard by calling:
-		//renderAt('#leaderBoard', raceProgress(res.positions))
-			if (race.status === "in-progress") {
+            console.log(race);
+            //TODO - if the race info status property is "in-progress", update the leaderboard by calling:
+            //renderAt('#leaderBoard', raceProgress(res.positions))
+            if (race.status === "in-progress") {
+              updateRaceProgress();
               renderAt("#leaderBoard", await raceProgress(race.positions));
             } else if (race.status === "finished") {
               clearInterval(raceInterval);
@@ -199,12 +200,44 @@ function handleSelectTrack(target) {
 async function handleAccelerate() {
   // TODO - Invoke the API call to accelerate
   try {
-  await accelerate(store.race_id);
-  }catch(error) {
-      console.log('Problem with handle accelerate' , error)
+    await accelerate(store.race_id);
+  } catch (error) {
+    console.log("Problem with handle accelerate", error);
   }
 }
+// Add new feature ----------------- progress bar
+function updateProgressBar(progress) {
+  const progressBar = document.querySelector('.progress');
+  progressBar.style.width = progress + '%';
+}
 
+async function updateRaceProgress() {
+  const raceId = store.race_id; 
+  const race = await getRace(raceId);
+  const raceProgress = race.positions
+  const totalRacers = raceProgress.length;
+  const totalProgress = raceProgress.reduce((sum, racer) => sum + racer.segment, 0);
+  const averageProgress = totalProgress / totalRacers;
+  const totalSegments = await calculateTrackSegments()
+  const diffrence = totalSegments / 100;
+  updateProgressBar(averageProgress / diffrence);
+}
+async function calculateTrackSegments() {
+
+  try {
+    const tracks = await getTracks();
+    console.log(tracks)
+    let totalTrackSegments = 0;
+    tracks.forEach(track => {
+      if(track.id == store.track_id) {
+        totalTrackSegments = track.segments.length;
+      }
+    });
+    return totalTrackSegments
+  } catch (error) {
+    console.log('Problem getting track Segments' , error);
+  }
+}
 // HTML VIEWS ------------------------------------------------
 // Provided code - do not remove
 
@@ -271,10 +304,8 @@ function renderCountdown(count) {
 }
 
 function renderRaceStartView(track, racers) {
-  const trackJoined = track.name
-  .split(' ')
-  .join('');
-  console.log(trackJoined)
+  const trackJoined = track.name.split(" ").join("");
+  console.log(trackJoined);
   return `
 		<header id = "${trackJoined}">
 			<h1>Race: ${track.name}</h1>
@@ -309,12 +340,12 @@ function resultsView(positions) {
 }
 
 function raceProgress(positions) {
-	let userPlayer = positions.find(e => e.id == store.player_id)
-	userPlayer.driver_name += " (you)"
+  let userPlayer = positions.find((e) => e.id == store.player_id);
+  userPlayer.driver_name += " (you)";
 
   positions = positions.sort((a, b) => (a.segment > b.segment ? -1 : 1));
   let count = 1;
-  console.log('race inprogress')
+  console.log("race inprogress");
   const results = positions.map((p) => {
     return `
 			<tr>
@@ -330,6 +361,10 @@ function raceProgress(positions) {
 			<h3>Leaderboard</h3>
 			<section id="leaderBoard">
 				${results}
+        <h4>Race Progress</h4>
+        <div class="progress-bar">
+        <div class="progress" style="width: 0;"></div>
+        </div>
 			</section>
 		</main>
 	`;
@@ -411,8 +446,7 @@ function startRace(id) {
   return fetch(`${SERVER}/api/races/${id}/start`, {
     method: "POST",
     ...defaultFetchOpts(),
-  })
-    .catch((err) => console.log("Problem with Start Race request::", err));
+  }).catch((err) => console.log("Problem with Start Race request::", err));
 }
 
 async function accelerate(id) {
@@ -422,6 +456,5 @@ async function accelerate(id) {
   return fetch(`${SERVER}/api/races/${id}/accelerate`, {
     method: "POST",
     ...defaultFetchOpts(),
-  })
-    .catch((err) => console.log("Problem with accelerate reuest::", err));
+  }).catch((err) => console.log("Problem with accelerate reuest::", err));
 }
