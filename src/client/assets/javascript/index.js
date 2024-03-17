@@ -81,6 +81,7 @@ async function handleCreateRace() {
   const playerId = store.player_id;
   const trackId = store.track_id;
   // const race = TODO - invoke the API call to create the race, then save the result
+  if(store.player_id !== undefined &&store.track_id !==undefined) {
   const race = await createRace(store.player_id, store.track_id);
   console.log(race);
   renderAt("#race", renderRaceStartView(await race.Track));
@@ -97,6 +98,9 @@ async function handleCreateRace() {
   await startRace(store.race_id);
   // TODO - call the async function runRace
   await runRace(store.race_id);
+  }else {
+    alert('Please Select Track And Racer');
+  }
 }
 
 async function runRace(raceID) {
@@ -106,7 +110,7 @@ async function runRace(raceID) {
         if (raceID !== null) {
           try {
             const race = await getRace(raceID);
-             
+             console.log(race)
 		//TODO - if the race info status property is "in-progress", update the leaderboard by calling:
 		//renderAt('#leaderBoard', raceProgress(res.positions))
 			if (race.status === "in-progress") {
@@ -193,9 +197,12 @@ function handleSelectTrack(target) {
 }
 
 async function handleAccelerate() {
-  console.log("accelerate button clicked");
   // TODO - Invoke the API call to accelerate
+  try {
   await accelerate(store.race_id);
+  }catch(error) {
+      console.log('Problem with handle accelerate' , error)
+  }
 }
 
 // HTML VIEWS ------------------------------------------------
@@ -264,8 +271,12 @@ function renderCountdown(count) {
 }
 
 function renderRaceStartView(track, racers) {
+  const trackJoined = track.name
+  .split(' ')
+  .join('');
+  console.log(trackJoined)
   return `
-		<header>
+		<header id = "${trackJoined}">
 			<h1>Race: ${track.name}</h1>
 		</header>
 		<main id="two-columns">
@@ -298,13 +309,12 @@ function resultsView(positions) {
 }
 
 function raceProgress(positions) {
-	console.log(store.player_id)
 	let userPlayer = positions.find(e => e.id == store.player_id)
 	userPlayer.driver_name += " (you)"
 
   positions = positions.sort((a, b) => (a.segment > b.segment ? -1 : 1));
   let count = 1;
-
+  console.log('race inprogress')
   const results = positions.map((p) => {
     return `
 			<tr>
@@ -402,11 +412,10 @@ function startRace(id) {
     method: "POST",
     ...defaultFetchOpts(),
   })
-    .then((res) => console.log(res))
-    .catch((err) => console.log("Problem with getRace request::", err));
+    .catch((err) => console.log("Problem with Start Race request::", err));
 }
 
-function accelerate(id) {
+async function accelerate(id) {
   // POST request to `${SERVER}/api/races/${id}/accelerate`
   // options parameter provided as defaultFetchOpts
   // no body or datatype needed for this request
@@ -414,6 +423,5 @@ function accelerate(id) {
     method: "POST",
     ...defaultFetchOpts(),
   })
-    .then(res => console.log(res))
     .catch((err) => console.log("Problem with accelerate reuest::", err));
 }

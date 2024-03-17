@@ -3,10 +3,26 @@
 /* -------------------  MOBILE  --------------------- */
 
 header {
-  background-image: url('https://via.placeholder.com/1150');
+   background-image: url('../images/MK8.jpg'); 
 }
-
-
+#WaterPark {
+  background-image: url('../images/water_park.jpg');
+}
+#MarioKartStadium {
+  background-image: url('../images/Mario_Kart_Stadium.jpg');
+}
+#SunshineAirport {
+  background-image: url('../images/sunshine_airport.jpg');
+}
+#CloudtopCruise {
+  background-image: url('../images/Cloudtop_Cruise.jpg');
+}
+#CheeseLand {
+  background-image: url('../images/cheese_land.jpg');
+}
+#DragonDriftway {
+  background-image: url('../images/dragon_driftway.jpg');
+}
 /* -------------------  TABLET  --------------------- */
 @media (min-width: 768px) {
 
