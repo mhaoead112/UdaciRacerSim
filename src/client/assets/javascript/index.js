@@ -83,12 +83,10 @@ async function handleCreateRace() {
   // const race = TODO - invoke the API call to create the race, then save the result
   if (store.player_id !== undefined && store.track_id !== undefined) {
     const race = await createRace(store.player_id, store.track_id);
-    console.log(race);
     renderAt("#race", renderRaceStartView(await race.Track));
 
     // TODO - update the store with the race id
     store.race_id = race.ID - 1;
-    console.log(store.race_id);
     // For the API to work properly, the race id should be race id - 1
 
     // The race has been created, now start the countdown
@@ -105,17 +103,24 @@ async function handleCreateRace() {
 
 async function runRace(raceID) {
   try {
-    return new Promise((resolve) => {
+    return new Promise((resolve , reject) => {
+      let intervalTime =0;
       const raceInterval = setInterval(async () => {
         if (raceID !== null) {
           try {
+            intervalTime+=500;
             const race = await getRace(raceID);
-            console.log(race);
             //TODO - if the race info status property is "in-progress", update the leaderboard by calling:
             //renderAt('#leaderBoard', raceProgress(res.positions))
             if (race.status === "in-progress") {
               updateRaceProgress();
               renderAt("#leaderBoard", await raceProgress(race.positions));
+              if(intervalTime > 100000) {
+                alert('Game Timeout');
+                clearInterval(raceInterval);
+                renderAt("#race", resultsView(race.positions));
+                resolve(race);
+              }
             } else if (race.status === "finished") {
               clearInterval(raceInterval);
               renderAt("#race", resultsView(race.positions));
@@ -168,7 +173,6 @@ async function runCountdown() {
 }
 
 function handleSelectPodRacer(target) {
-  console.log("selected a pod", target.id);
   // remove class selected from all racer options
   const selected = document.querySelector("#racers .selected");
   if (selected) {
@@ -178,11 +182,9 @@ function handleSelectPodRacer(target) {
   target.classList.add("selected");
   // TODO - save the selected racer to the store
   store.player_id = target.id;
-  console.log(store);
 }
 
 function handleSelectTrack(target) {
-  console.log("selected a track", target.id);
 
   // remove class selected from all track options
   const selected = document.querySelector("#tracks .selected");
@@ -226,7 +228,6 @@ async function calculateTrackSegments() {
 
   try {
     const tracks = await getTracks();
-    console.log(tracks)
     let totalTrackSegments = 0;
     tracks.forEach(track => {
       if(track.id == store.track_id) {
@@ -305,7 +306,6 @@ function renderCountdown(count) {
 
 function renderRaceStartView(track, racers) {
   const trackJoined = track.name.split(" ").join("");
-  console.log(trackJoined);
   return `
 		<header id = "${trackJoined}">
 			<h1>Race: ${track.name}</h1>
@@ -345,7 +345,6 @@ function raceProgress(positions) {
 
   positions = positions.sort((a, b) => (a.segment > b.segment ? -1 : 1));
   let count = 1;
-  console.log("race inprogress");
   const results = positions.map((p) => {
     return `
 			<tr>
